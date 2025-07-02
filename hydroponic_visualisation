@@ -1,0 +1,51 @@
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Script for visualizing hydroponic system parameters and ML model predictions
+# Emphasizes biogeochemical dynamics and real-time monitoring
+
+def load_hydroponic_data(file_path):
+    """Load processed hydroponic dataset."""
+    try:
+        data = pd.read_csv(file_path)
+        return data
+    except FileNotFoundError:
+        raise FileNotFoundError("Dataset not found.")
+    except Exception as e:
+        raise Exception(f"Error loading dataset: {e}")
+
+def plot_parameter_timeseries(data, parameter, title):
+    """Plot timeseries of a hydroponic parameter."""
+    plt.figure(figsize=(10, 6))
+    sns.lineplot(x=data.index, y=data[parameter], marker="o")
+    plt.title(title)
+    plt.xlabel("Time (Sample Index)")
+    plt.ylabel(parameter)
+    plt.show()
+
+def plot_correlation_matrix(data, parameters):
+    """Plot correlation matrix of hydroponic parameters."""
+    plt.figure(figsize=(8, 6))
+    correlation_matrix = data[parameters].corr()
+    sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", vmin=-1, vmax=1)
+    plt.title("Correlation Matrix of Hydroponic Parameters")
+    plt.show()
+
+def main(file_path):
+    """Visualize hydroponic system parameters."""
+    # Load data
+    data = load_hydroponic_data(file_path)
+    
+    # Plot timeseries for key parameters
+    parameters = ["ph", "nutrient_conc", "seawater_temperature", "humidity"]
+    for param in parameters:
+        plot_parameter_timeseries(data, param, f"Timeseries of {param} in Hydroponic System")
+    
+    # Plot correlation matrix
+    plot_correlation_matrix(data, parameters)
+
+if __name__ == "__main__":
+    # Example usage
+    sample_file = "hydroponic_sensor_data_processed.csv"
+    main(sample_file)
