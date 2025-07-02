@@ -1,0 +1,72 @@
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+
+# Utility script for preprocessing hydroponic sensor data
+# Focuses on stoichiometric normalization of nutrient and environmental parameters
+
+def load_hydroponic_dataset(file_path):
+    """Load hydroponic dataset with biogeochemical and environmental parameters."""
+    try:
+        data = pd.read_csv(file_path)
+        required_parameters = ["ph", "nutrient_conc", "seawater_temperature", "humidity"]
+        if not all(param in data.columns for param in required_parameters):
+            raise ValueError("Required biogeochemical parameters missing.")
+        return data
+    except FileNotFoundError:
+        raise FileNotFoundError("Dataset not found.")
+    except Exception as e:
+        raise Exception(f"Error loading dataset: {e}")
+
+def normalize_stoichiometric_parameters(data, parameters):
+    """Normalize hydroponic parameters using stoichiometric scaling."""
+    scaler = StandardScaler()
+    data[parameters] = scaler.fit_transform(data[parameters])
+    return data, scaler
+
+def detect_anomalies(data, parameter, threshold=3):
+    """Detect anomalies in hydroponic parameters using z-score."""
+    z_scores = np.abs((data[parameter] - data[parameter].mean()) / data[parameter].std())
+    anomalies = data[z_scores > threshold]
+    return anomalies
+
+def visualize_parameter_distribution(data, parameter):
+    """Visualize distribution of hydroponic parameter."""
+    plt.figure(figsize=(8, 6))
+    plt.hist(data[parameter], bins=30, edgecolor="black")
+    plt.title(f"Distribution of {parameter} in Hydroponic System")
+    plt.xlabel(parameter)
+    plt.ylabel("Frequency")
+    plt.show()
+
+def main(file_path, parameters_to_normalize):
+    """Preprocess and analyze hydroponic dataset."""
+    # Load dataset
+    data = load_hydroponic_dataset(file_path)
+    
+    # Normalize specified parameters
+    data, scaler = normalize_stoichiometric_parameters(data, parameters_to_normalize)
+    print("Hydroponic parameters normalized successfully.")
+    
+    # Detect anomalies
+    for param in parameters_to_normalize:
+        anomalies = detect_anomalies(data, param)
+        if not anomalies.empty:
+            print(f"Anomalies detected in {param}:")
+            print(anomalies)
+    
+    # Visualize parameter distributions
+    for param in parameters_to_normalize:
+        visualize_parameter_distribution(data, param)
+    
+    # Save processed dataset
+    output_path = file_path.replace(".csv", "_processed.csv")
+    data.to_csv(output_path, index=False)
+    print(f"Processed dataset saved to {output_path}")
+
+if __name__ == "__main__":
+    # Example usage
+    sample_file = "hydroponic_sensor_data.csv"
+    parameters = ["ph", "nutrient_conc", "seawater_temperature", "humidity"]
+    main(sample_file, parameters)
